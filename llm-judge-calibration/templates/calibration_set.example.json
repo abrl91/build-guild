@@ -1,0 +1,49 @@
+{
+  "calibration_examples": [
+    {
+      "id": "dialogue-001-good",
+      "dialogue": "Original dialogue",
+      "candidate_type": "good",
+      "candidate_summary": "The groundtruth summary provided by DialogSum",
+      "expected": {
+        "salience": 1,
+        "brevity": 1,
+        "named_entities": 1,
+        "observer_perspective": 1,
+        "formal_language": 1,
+        "overall": "good"
+      },
+      "justification": "The provided groundtruth summary is assumed to be correct and satisfy all five rules"
+    },
+    {
+      "id": "dialogue-001-bad",
+      "dialogue": "The same original dialogue",
+      "candidate_type": "bad",
+      "candidate_summary": "A deliberately degraded summary",
+      "expected": {
+        "salience": 0,
+        "brevity": 0,
+        "named_entities": 0,
+        "observer_perspective": 0,
+        "formal_language": 0,
+        "overall": "bad"
+      },
+      "justification": "This candidate deliberately violates the five rules"
+    },
+    {
+      "id": "dialogue-001-ambiguous",
+      "dialogue": "The same original dialogue",
+      "candidate_type": "ambiguous",
+      "candidate_summary": "A candidate that satisfies some rules but violates others",
+      "expected": {
+        "salience": 1,
+        "brevity": 1,
+        "named_entities": 0,
+        "observer_perspective": 1,
+        "formal_language": 0,
+        "overall": "ambiguous"
+      },
+      "justification": "The criterion-level labels show why one overall score is insufficient"
+    }
+  ]
+}

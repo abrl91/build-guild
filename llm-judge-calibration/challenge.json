@@ -1,0 +1,229 @@
+{
+  "id": "llm-judge-calibration",
+  "title": "LLM Judge Calibration for Conversation Summaries",
+  "goal": "Build and calibrate an LLM judge that helps a restaurant chain evaluate conversation summaries without reading every customer interaction.",
+  "introduction": {
+    "title": "Help Restaurant Owners Understand Every Conversation",
+    "body": [
+      "You are working for a chain of restaurants that wants to improve its customer service.",
+      "The owners do not have time to read every conversation, so they need a system that produces a useful summary of each one.",
+      "They provided examples of good summaries and rules for judging summary quality; your job is to build the summarizer, test common metrics, and create a calibrated LLM judge."
+    ],
+    "illustration": "llm-as-judge-illustration.png"
+  },
+  "dataset": {
+    "name": "DialogSum",
+    "huggingface_id": "knkarthick/dialogsum",
+    "url": "https://huggingface.co/datasets/knkarthick/dialogsum",
+    "loading_example": "from datasets import load_dataset\n\ndataset = load_dataset(\"knkarthick/dialogsum\")\nprint(dataset[\"train\"][0])",
+    "notes": [
+      "The main fields are dialogue, summary, and topic.",
+      "Use a fixed seed and a small sample so live runs are quick and reproducible.",
+      "Look for restaurant or food-ordering conversations, but retain other examples if the filtered subset is too small.",
+      "Keep one evaluation sample unchanged from baseline generation through judge calibration and final comparison."
+    ]
+  },
+  "summary_guidelines": [
+    "Convey the most salient information from the dialogue.",
+    "Be brief: no longer than 20% of the conversation length.",
+    "Preserve important named entities.",
+    "Write from an observer's perspective.",
+    "Use formal language."
+  ],
+  "milestones": [
+    {
+      "id": "explore_dialogues",
+      "title": "EDA - Exploratory Data Analysis",
+      "short_description": "Inspect DialogSum and prepare a small working sample.",
+      "long_description": "- Explore the [DialogSum dataset](https://huggingface.co/datasets/knkarthick/dialogsum).\n- View the first four rows and their columns.\n- Inspect dialogue and summary lengths.\n- Use the `order_food` topic.\n- Save a small train sample and a small test sample.",
+      "tasks": [
+        {
+          "id": "profile_dialogsum",
+          "title": "View the first rows and columns",
+          "small_hint": "Convert a split to a DataFrame, then inspect `df[:4]` and `df.columns`.",
+          "full_explanation": "Load [DialogSum](https://huggingface.co/datasets/knkarthick/dialogsum), convert the training split to a pandas DataFrame, and inspect `df[:4]` together with its column names. Save those four rows and the columns so the dataset structure is visible. Then add a few dialogue and reference-summary length statistics that will matter during summarization.",
+          "expected_artifacts": ["user_artifacts/src/explore_data.py", "user_artifacts/dataset_profile.json"]
+        },
+        {
+          "id": "select_working_sample",
+          "title": "Create small train and test samples for `order_food`",
+          "small_hint": "Filter by the exact `order_food` topic, keep both samples small, and include the original reference summaries.",
+          "full_explanation": "Filter DialogSum using the exact `order_food` topic. Create separate small train and test samples with stable identifiers, dialogue, topic, and groundtruth summary. Record the sample sizes and a fixed seed so the selection is reproducible. Keep the test sample separate from examples used to build or calibrate the system.",
+          "expected_artifacts": ["user_artifacts/order_food_samples.json"]
+        }
+      ]
+    },
+    {
+      "id": "baseline_summarizer",
+      "title": "Create the First Summarizer",
+      "short_description": "Generate baseline summaries for the working sample.",
+      "long_description": "- Build one dialogue-to-summary interface.\n- Generate a simple baseline.\n- Keep inputs, references, and predictions together.",
+      "tasks": [
+        {
+          "id": "create_summarizer",
+          "title": "Turn one customer conversation into a summary",
+          "small_hint": "Use a small, stable function or DSPy module whose only input is a dialogue.",
+          "full_explanation": "Implement a baseline summarizer in user_artifacts/src/summarizer.py. A DSPy Signature and Module are recommended for the session, but the interface should remain understandable: one dialogue enters and one summary leaves. Keep the initial instructions simple so later evaluation has something meaningful to improve.",
+          "expected_artifacts": ["user_artifacts/src/summarizer.py"]
+        },
+        {
+          "id": "run_baseline",
+          "title": "See how the first version performs",
+          "small_hint": "Retain the dialogue and reference beside every generated summary.",
+          "full_explanation": "Run the baseline summarizer on the fixed working sample. Save one row per example with its identifier, dialogue, reference summary, predicted summary, and model configuration. Record failures instead of silently dropping them.",
+          "expected_artifacts": ["user_artifacts/baseline_results.json"]
+        }
+      ]
+    },
+    {
+      "id": "metric_limits",
+      "title": "Test Familiar Evaluation Metrics",
+      "short_description": "Compare reference-based scores with examples people can inspect.",
+      "long_description": "- Add lexical and semantic comparison.\n- Score the same baseline outputs.\n- Perform error analysis on the highest and lowest scores.\n- Bonus: read the [G-Eval paper](https://arxiv.org/abs/2303.16634).",
+      "tasks": [
+        {
+          "id": "implement_reference_metrics",
+          "title": "Measure similarity to the provided examples",
+          "small_hint": "Use one overlap-based metric and one embedding or model-based semantic metric.",
+          "full_explanation": "Implement reusable lexical and semantic functions that compare one predicted summary with its reference. Use established libraries or provider APIs and document score direction and range. These metrics measure similarity to a reference; do not present them as complete quality judgments.",
+          "expected_artifacts": ["user_artifacts/src/reference_metrics.py"]
+        },
+        {
+          "id": "score_baseline_metrics",
+          "title": "Score every baseline summary",
+          "small_hint": "Preserve per-example scores as well as aggregate values.",
+          "full_explanation": "Apply both metrics to every retained baseline result. Save per-example lexical and semantic scores, aggregate statistics, metric names, and relevant configuration so the run is interpretable and reproducible.",
+          "expected_artifacts": ["user_artifacts/reference_metric_results.json"]
+        },
+        {
+          "id": "inspect_metric_failures",
+          "title": "Perform error analysis on extreme metric values",
+          "small_hint": "Inspect the highest and lowest lexical and semantic scores before deciding what the metrics capture.",
+          "full_explanation": "Sort the baseline results by each metric and inspect examples from both extremes: the highest and lowest lexical scores and the highest and lowest semantic scores. Include the dialogue, reference, prediction, scores, and your assessment of summary quality. Look for cases where an extreme score is misleading or where the metrics disagree, then use that evidence to define what the next evaluator must assess beyond reference similarity.",
+          "expected_artifacts": ["user_artifacts/metric_case_studies.md"]
+        },
+        {
+          "id": "read_g_eval",
+          "title": "Bonus: Read G-Eval",
+          "small_hint": "Focus on why reference-based metrics struggle with open-ended generated text and how explicit evaluation criteria help.",
+          "full_explanation": "Read [G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment](https://arxiv.org/abs/2303.16634). The paper explains why conventional reference-based metrics such as BLEU and ROUGE can correlate poorly with human judgment, especially for diverse generated text. Pay attention to its use of explicit criteria, reasoning steps, and structured scoring, as well as the limitations and biases the authors identify in LLM-based evaluators.",
+          "optional": true,
+          "expected_artifacts": []
+        }
+      ]
+    },
+    {
+      "id": "build_llm_judge",
+      "title": "Build an LLM Judge",
+      "short_description": "Translate the owners' rules into a structured evaluator.",
+      "long_description": "- Turn annotation rules into explicit criteria.\n- Return structured criterion-level judgments.\n- Run the first judge before calibration.",
+      "tasks": [
+        {
+          "id": "design_judge_rubric",
+          "title": "Turn the owners' rules into questions a judge can answer",
+          "small_hint": "Make each criterion observable and define what its score means.",
+          "full_explanation": "Convert the five DialogSum guidelines into an operational rubric covering salience, brevity, named entities, observer perspective, and formal language. Define score meanings, overall aggregation, and what evidence the judge should return. Keep the rubric separate from code so a human can inspect it.",
+          "expected_artifacts": ["user_artifacts/judge_rubric.md"]
+        },
+        {
+          "id": "implement_llm_judge",
+          "title": "Create an evaluator that applies the rubric consistently",
+          "small_hint": "Use structured outputs instead of parsing free-form prose.",
+          "full_explanation": "Implement an LLM judge that receives a dialogue and candidate summary and returns criterion-level scores, an overall score or verdict, and concise evidence. Use a schema or typed structured output. The reference summary may be useful for analysis, but the judge must be able to evaluate quality without treating exact reference similarity as correctness.",
+          "expected_artifacts": ["user_artifacts/src/llm_judge.py"]
+        },
+        {
+          "id": "run_uncalibrated_judge",
+          "title": "Observe how the judge behaves before teaching it examples",
+          "small_hint": "Run it on selected good, bad, and ambiguous summaries without tuning against their expected labels.",
+          "full_explanation": "Run the initial judge on a small set that includes baseline outputs and deliberately clear quality differences. Save every input, criterion score, overall result, and rationale. Label this run as uncalibrated so it can be compared honestly in the next milestone.",
+          "expected_artifacts": ["user_artifacts/uncalibrated_judge_results.json"]
+        }
+      ]
+    },
+    {
+      "id": "calibrate_judge",
+      "title": "Calibrate the Judge",
+      "short_description": "Use the provided reference summaries and five quality rules to teach the judge what good looks like.",
+      "long_description": "**How can we utilize the groundtruth summaries to calibrate the Judge?**\n\n- Treat the provided groundtruth summaries as agreed good examples.\n- Apply the five summary rules to every example.\n- Create bad examples that deliberately violate the rules.\n- Create ambiguous examples that satisfy only some rules.\n- Compare the judge before and after adding the calibration examples.",
+      "tasks": [
+        {
+          "id": "create_calibration_set",
+          "title": "Create good, bad, and ambiguous examples from the groundtruth",
+          "small_hint": "Treat the provided groundtruth summary as correct, then compare controlled alternatives against the five rules.",
+          "full_explanation": "Build a compact calibration set around DialogSum groundtruth summaries. Use each original groundtruth summary as an agreed good example and assume it satisfies the five rules: salience, brevity, named-entity preservation, observer perspective, and formal language. Create clearly bad summaries by deliberately violating important rules, and create ambiguous summaries that satisfy some rules but not others. Record the expected result for each of the five criteria and briefly explain each label.",
+          "expected_artifacts": ["user_artifacts/calibration_set.json"]
+        },
+        {
+          "id": "calibrate_llm_judge",
+          "title": "Calibrate the judge with the groundtruth-based examples",
+          "small_hint": "Show the judge examples that demonstrate how each of the five rules should affect its decision.",
+          "full_explanation": "Use the good, bad, and ambiguous examples to improve the judge prompt. The good examples come from the provided groundtruth summaries; the alternatives demonstrate specific rule violations. Run the judge before and after adding this calibration context, then inspect whether its criterion-level decisions better match the expected labels. Record the exact prompt or examples added and retain disagreements for discussion.",
+          "expected_artifacts": ["user_artifacts/src/calibrate_judge.py", "user_artifacts/judge_calibration_results.json"]
+        }
+      ]
+    },
+    {
+      "id": "evaluate_and_improve",
+      "title": "Use the Judge to Improve the Product",
+      "short_description": "Evaluate the baseline, identify its weakness, and test one improvement.",
+      "long_description": "- Evaluate baseline summaries with the calibrated judge.\n- Aggregate scores by criterion.\n- Improve one weakness.\n- Compare the old and new behavior.",
+      "tasks": [
+        {
+          "id": "evaluate_with_calibrated_judge",
+          "title": "Assess the baseline with the trusted judge",
+          "small_hint": "Keep criterion scores and rationales so aggregate numbers remain explainable.",
+          "full_explanation": "Run the calibrated judge over the unchanged baseline sample. Save per-example judgments, aggregate criterion scores, the overall score, and failures. Compare the judge's view with the earlier lexical and semantic metrics without claiming that any single metric is absolute truth.",
+          "expected_artifacts": ["user_artifacts/calibrated_evaluation.json"]
+        },
+        {
+          "id": "improve_summarizer",
+          "title": "Improve the weakness the evaluation revealed",
+          "small_hint": "Make one explainable change and keep everything else comparable.",
+          "full_explanation": "Choose one recurring weakness revealed by the calibrated judge, revise the summarizer, and run it on the same examples. Compare baseline and improved summaries with the same judge and report criterion-level changes, regressions, and model configuration. Do not select only favorable examples.",
+          "expected_artifacts": ["user_artifacts/src/improved_summarizer.py", "user_artifacts/improvement_results.json"]
+        },
+        {
+          "id": "write_product_recommendation",
+          "title": "Tell the restaurant owners what the system can and cannot do",
+          "small_hint": "Translate experiment evidence into an operational recommendation.",
+          "full_explanation": "Write a concise recommendation covering observed summary quality, the calibrated judge's limits, important disagreement cases, and what should happen before production deployment. Include a concrete human-review or monitoring strategy rather than presenting the judge as ground truth.",
+          "expected_artifacts": ["user_artifacts/product_recommendation.md"]
+        }
+      ]
+    },
+    {
+      "id": "additional_metrics",
+      "title": "Additional Metrics",
+      "short_description": "Optionally evaluate groundedness and completeness.",
+      "long_description": "- Groundedness: does the summary contain only information supported by the conversation?\n- Completeness: does the summary preserve the important information from the conversation?",
+      "optional": true,
+      "tasks": [
+        {
+          "id": "add_groundedness_metric",
+          "title": "Add a Groundedness metric",
+          "small_hint": "Check every claim in the summary against evidence in the original conversation.",
+          "full_explanation": "Create a Groundedness evaluator that identifies whether the candidate summary introduces information that is not supported by the original conversation. Return a score or verdict with evidence for unsupported claims. This evaluates faithfulness to the source rather than similarity to the groundtruth summary.",
+          "optional": true,
+          "expected_artifacts": ["user_artifacts/groundedness_results.json"]
+        },
+        {
+          "id": "add_completeness_metric",
+          "title": "Add a Completeness metric",
+          "small_hint": "Identify the important facts in the conversation, then check which ones the summary preserves.",
+          "full_explanation": "Create a Completeness evaluator that measures whether the candidate summary includes the conversation's important information. Return a score or verdict and identify important details that were omitted. Completeness is different from Groundedness: a summary can contain no unsupported claims while still leaving out essential information.",
+          "optional": true,
+          "expected_artifacts": ["user_artifacts/completeness_results.json"]
+        }
+      ]
+    },
+    {
+      "id": "summary",
+      "title": "Summary",
+      "short_description": "Review the complete path from generated summaries to calibrated evaluation.",
+      "long_description": "- A useful evaluation starts with a clear product need, not a metric.\n- Exploratory data analysis reveals what the conversations and reference summaries actually contain.\n- A baseline summarizer creates concrete outputs that can be inspected and improved.\n- Lexical metrics measure word overlap with a reference summary.\n- Semantic metrics measure similarity in meaning, but similarity is not the same as quality.\n- Error analysis on extreme scores reveals what automatic metrics reward and miss.\n- G-Eval motivates evaluating generated text with explicit criteria instead of relying on reference similarity alone.\n- The five rules define observable summary qualities: salience, brevity, named entities, observer perspective, and formal language.\n- DialogSum groundtruth summaries can serve as agreed good calibration examples.\n- Deliberately bad examples demonstrate clear violations of the rules.\n- Ambiguous examples show why criterion-level decisions are more useful than one unexplained score.\n- Calibration aligns the judge with the decisions and examples that matter for this product.\n- A calibrated judge should still expose its evidence, disagreements, and limitations.\n- Groundedness checks whether summary claims are supported by the conversation.\n- Completeness checks whether important conversation details were preserved.\n- Evaluation becomes valuable when its findings lead to a measurable product improvement.\n- No automatic metric or LLM judge should be treated as unquestionable ground truth.",
+      "informational": true,
+      "tasks": []
+    }
+  ]
+}

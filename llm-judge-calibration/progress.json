@@ -1,0 +1,23 @@
+{
+  "challenge_id": "llm-judge-calibration",
+  "tasks": {
+    "profile_dialogsum": {"status": "pending", "builder_notes": "", "judge": null},
+    "select_working_sample": {"status": "pending", "builder_notes": "", "judge": null},
+    "create_summarizer": {"status": "pending", "builder_notes": "", "judge": null},
+    "run_baseline": {"status": "pending", "builder_notes": "", "judge": null},
+    "implement_reference_metrics": {"status": "pending", "builder_notes": "", "judge": null},
+    "score_baseline_metrics": {"status": "pending", "builder_notes": "", "judge": null},
+    "inspect_metric_failures": {"status": "pending", "builder_notes": "", "judge": null},
+    "read_g_eval": {"status": "pending", "builder_notes": "", "judge": null},
+    "design_judge_rubric": {"status": "pending", "builder_notes": "", "judge": null},
+    "implement_llm_judge": {"status": "pending", "builder_notes": "", "judge": null},
+    "run_uncalibrated_judge": {"status": "pending", "builder_notes": "", "judge": null},
+    "create_calibration_set": {"status": "pending", "builder_notes": "", "judge": null},
+    "calibrate_llm_judge": {"status": "pending", "builder_notes": "", "judge": null},
+    "evaluate_with_calibrated_judge": {"status": "pending", "builder_notes": "", "judge": null},
+    "improve_summarizer": {"status": "pending", "builder_notes": "", "judge": null},
+    "write_product_recommendation": {"status": "pending", "builder_notes": "", "judge": null},
+    "add_groundedness_metric": {"status": "pending", "builder_notes": "", "judge": null},
+    "add_completeness_metric": {"status": "pending", "builder_notes": "", "judge": null}
+  }
+}

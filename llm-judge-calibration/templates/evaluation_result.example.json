@@ -1,0 +1,20 @@
+{
+  "sample_size": 1,
+  "aggregate": {
+    "overall_score": 0.0,
+    "salience": 0.0,
+    "brevity": 0.0,
+    "named_entities": 0.0,
+    "observer_perspective": 0.0,
+    "formal_language": 0.0
+  },
+  "results": [
+    {
+      "id": "example-001",
+      "dialogue": "Original dialogue",
+      "candidate_summary": "Candidate summary",
+      "judgment": {},
+      "rationale": "Short evidence-based rationale"
+    }
+  ]
+}

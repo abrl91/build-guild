@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "buildguild-few-shot-prompt-optimization"
+version = "0.1.0"
+description = "BuildGuild Quest 2: Few-Shot Prompt Optimization"
+requires-python = ">=3.10"
+dependencies = [
+  "streamlit>=1.36",
+  "datasets>=2.19",
+]
+
+[tool.uv]
+managed = true

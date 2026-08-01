@@ -11,20 +11,23 @@ quest's own instructions, not to invent a curriculum around it.
 
 ## 1. Resolve the module directory
 
-| User says | Directory |
-|-----------|-----------|
-| module 1 / 01 / rag evaluation | `01-rag-evaluation` |
-| module 2 / 02 / prompt optimization | `02-few-shot-prompt-optimization` |
-| module 3 / 03 / dspy | `03-atis-few-shot-dspy` |
-| module 4 / 04 / llm judge | `04-llm-judge-calibration` |
+| User says | Directory | Launch style |
+|-----------|-----------|--------------|
+| module 1 / 01 / rag evaluation | `01-rag-evaluation` | interactive terminal CLI |
+| module 2 / 02 / prompt optimization | `02-few-shot-prompt-optimization` | Streamlit workspace |
+| module 3 / 03 / dspy | `03-atis-few-shot-dspy` | Streamlit workspace |
+| module 4 / 04 / llm judge | `04-llm-judge-calibration` | Streamlit workspace |
 
 If the user just says "start the BuildGuild game" with no module, check which modules exist
 and ask which one — don't guess.
 
-## 2. Run start
+The two launch styles are genuinely different. Only module 1 has the `buildguild` CLI;
+running it in modules 2–4 will fail.
+
+## 2a. Module 1 — run the CLI
 
 ```bash
-cd <module-directory>
+cd 01-rag-evaluation
 uv run buildguild start
 ```
 
@@ -49,18 +52,34 @@ Guidance levels, if they ask:
 If `.buildguild/settings.json` already exists, start offers to continue with the saved name
 and level. Let the user decide.
 
+## 2b. Modules 2–4 — run the Streamlit workspace
+
+```bash
+cd <module-directory>
+uv run --no-project --with-requirements requirements.txt streamlit run app.py
+```
+
+`--no-project` matters: these modules are Streamlit apps, not importable packages, so the
+workspace environment is deliberately bypassed in favour of `requirements.txt`.
+
+Streamlit blocks the terminal, so start it in the background and hand the user the URL it
+prints. `make stop-quests` (from the repo root) kills quests listening on ports 8502–8504.
+
 ## 3. Hand off to the quest
 
-Setup writes `.buildguild/settings.json` (player name + difficulty) and tracks progress
-separately in `.buildguild/state.json`. The command ends by naming the next step.
+Module 1's setup writes `.buildguild/settings.json` (player name + difficulty) and tracks
+progress separately in `.buildguild/state.json`. The command ends by naming the next step —
+follow it immediately. For module 1 that is `skills/mike-data-onboarding.md`; read that file
+and continue in character.
 
-Follow it immediately. For module 1 that is `skills/mike-data-onboarding.md` — read that
-file and continue in character. Each module's `AGENTS.md` and `README.md` describe its own
-flow; those files are the source of truth, so read them rather than assuming module 1's
-shape applies elsewhere.
+For modules 2–4 the app itself is the quest surface: point the user at the URL, then read
+that module's `README.md` (and `AGENTS.md` if it has one — only module 1 does today) for its
+own flow. Those files are the source of truth; don't assume module 1's shape applies
+elsewhere.
 
 ## Troubleshooting
 
-- **Onboarding CSVs missing** — run `uv run --extra dev invoke data` in the module directory.
-- **Lost track of where you are** — `uv run buildguild status` prints the current stage and next action.
+- **Module 1 onboarding CSVs missing** — run `uv run --extra dev invoke data` in `01-rag-evaluation`.
+- **Lost track of where you are in module 1** — `uv run buildguild status` prints the current stage and next action.
 - **Want to start over** — module 1 has `skills/restart-game.md`.
+- **Streamlit port already in use** — `make stop-quests` from the repo root, then relaunch.

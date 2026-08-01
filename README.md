@@ -61,6 +61,18 @@ This is a `uv` workspace. Each module is self-contained with its own `pyproject.
 - **Builder role**: Implement quest tasks (see `AGENTS.md`)
 - **Judge role**: Evaluate completed tasks (see `challenge.json`)
 
+## Codex Quest Skill
+
+This repository includes a local Codex plugin with the `$buildguild-start-quest` skill.
+Install the repository marketplace, add the plugin, and start a new Codex thread before using it:
+
+```bash
+codex plugin marketplace add .
+codex plugin add buildguild-start-quest@personal
+```
+
+Use `$buildguild-start-quest` or ask Codex to start a specific module. `/start-quest` is not a Codex command.
+
 ## Attribution
 
 Quest 1 (RAG Evaluation) is based on [broken-help-center-quest](https://github.com/SerjSmor/broken-help-center-quest) by SerjSmor.

@@ -1,4 +1,4 @@
-.PHONY: help install install-all install-01 install-02 install-03 install-04 check check-lock clean
+.PHONY: help install install-all install-01 install-02 install-03 install-04 check check-lock stop-quests clean
 
 help:
 	@echo "BuildGuild - uv workspace with modular quests"
@@ -13,6 +13,7 @@ help:
 	@echo "Verification:"
 	@echo "  make check          - Run read-only workspace smoke checks"
 	@echo "  make check-lock     - Verify uv.lock is current"
+	@echo "  make stop-quests    - Stop local Streamlit quests on ports 8502-8504"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean          - Remove .venv and uv.lock"
@@ -46,6 +47,15 @@ check:
 
 check-lock:
 	uv lock --check
+
+stop-quests:
+	@for port in 8502 8503 8504; do \
+		pids="$$(lsof -tiTCP:$$port -sTCP:LISTEN || true)"; \
+		if [ -n "$$pids" ]; then \
+			echo "Stopping quest on port $$port (PID $$pids)..."; \
+			kill $$pids; \
+		fi; \
+	done
 
 clean:
 	rm -rf .venv uv.lock

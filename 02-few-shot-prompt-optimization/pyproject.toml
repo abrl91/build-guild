@@ -14,3 +14,9 @@ dependencies = [
 
 [tool.uv]
 managed = true
+
+# This quest is run as a Streamlit application, not imported as a Python
+# package.  Allow Hatch to build the editable project metadata without trying
+# to infer a package directory from the project name.
+[tool.hatch.build.targets.wheel]
+bypass-selection = true

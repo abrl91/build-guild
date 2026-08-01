@@ -1,4 +1,4 @@
-.PHONY: help install install-all install-01 install-02 install-03 install-04 clean
+.PHONY: help install install-all install-01 install-02 install-03 install-04 check check-lock clean
 
 help:
 	@echo "BuildGuild - uv workspace with modular quests"
@@ -10,11 +10,17 @@ help:
 	@echo "  make install-03     - Install 03-atis-few-shot-dspy dependencies"
 	@echo "  make install-04     - Install 04-llm-judge-calibration dependencies"
 	@echo ""
+	@echo "Verification:"
+	@echo "  make check          - Run read-only workspace smoke checks"
+	@echo "  make check-lock     - Verify uv.lock is current"
+	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean          - Remove .venv and uv.lock"
 
 install-all: venv install-01 install-02 install-03 install-04
 	@echo "✓ All modules installed"
+
+install: install-all
 
 venv:
 	@if [ ! -d ".venv" ]; then uv venv; fi
@@ -34,6 +40,12 @@ install-03:
 install-04:
 	@echo "Installing 04-llm-judge-calibration dependencies..."
 	uv pip install -r 04-llm-judge-calibration/requirements.txt
+
+check:
+	python3 scripts/check_workspace.py
+
+check-lock:
+	uv lock --check
 
 clean:
 	rm -rf .venv uv.lock

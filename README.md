@@ -32,6 +32,12 @@ make install-01
 
 # See all available commands
 make help
+
+# Run read-only workspace smoke checks
+make check
+
+# Verify the lockfile is current
+make check-lock
 ```
 
 ## Structure
